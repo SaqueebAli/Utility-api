@@ -21,61 +21,48 @@ app.use(cors(corsOptions),express.static(`${__dirname}/public`));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/uniqueFieldsName', (req, res) => {
-  let file1 ;
-  let file2 ;
-  
-  try{
-    try{
+app.get('/uniqueFieldsName1', (req, res) => {
 
-      file1 = fs.readdirSync("public\\files\\File1");
-    }catch{
-file1="none"
-    }
-    try{
 
-      file2 = fs.readdirSync("public\\files\\File2");
-    }catch{
-      file2="none"
-    }
+  if(fs.existsSync("public\\files\\Keygen\\Keygen.json")){
+    var Keygen=JSON.parse(fs.readFileSync("public\\files\\Keygen\\Keygen.json",{encoding:'utf8', flag:'r'}))
     
-  }
-  catch (e){
-    
-  }
-  if(fs.existsSync("public\\files\\File1\\"+file1[0])){
-    var data1=fs.readFileSync("public\\files\\File1\\"+file1[0],{encoding:'utf8', flag:'r'})
-    var combined=[...Object.keys(JSON.parse(data1)[0])]
     
   }
   else{
-    data1="File 1 not found"
+    Keygen="Keygen.json not found"
+    res.status(404);
   }
-  if(fs.existsSync("public\\files\\File2\\"+file2[0])){
-    var data2=fs.readFileSync("public\\files\\File2\\"+file2[0],{encoding:'utf8', flag:'r'})
-    combined.push(...Object.keys(JSON.parse(data2)[0]))
-    
-  }else{
-    data2="File 2 not found"
-  }
-  try{
 
-    var uniqueFieldName = combined.filter((x, i, a) => a.indexOf(x) == i)
-  }
-  catch(e){
-    res.status(404);   }
   var uniqueJson={}
-  for (let i = 0; i < uniqueFieldName.length; i++) {
+  for (let i = 0; i <(Keygen["File1ColumnName"]).length; i++) {
     
-      uniqueJson[uniqueFieldName[i]]="#24a0ed";
+      uniqueJson[(Keygen["File1ColumnName"])[i]]="#24a0ed";
       
     
   }
-  // uniqueFieldName.forEach(Function3){
-  //   function Function3(element, index, arr) {
-  //     uniqueJson[element] = "#3CB043";
-  //     }
-  // }
+  
+  
+  res.status(200).send(JSON.stringify(uniqueJson)); 
+});
+app.get('/uniqueFieldsName2', (req, res) => {
+  if(fs.existsSync("public\\files\\Keygen\\Keygen.json")){
+    var Keygen=JSON.parse(fs.readFileSync("public\\files\\Keygen\\Keygen.json",{encoding:'utf8', flag:'r'}))
+    
+    
+  }
+  else{
+    Keygen="Keygen.json not found"
+    res.status(404);
+  }
+
+  var uniqueJson={}
+  for (let i = 0; i < (Keygen["File2ColumnName"]).length; i++) {
+    
+      uniqueJson[(Keygen["File2ColumnName"])[i]]="#24a0ed";
+      
+    
+  }
   
   res.status(200).send(JSON.stringify(uniqueJson)); 
 });
@@ -100,6 +87,7 @@ app.post('/upload',(req,res) => {
             fs.renameSync(file.filepath, path.join(uploadFolder, filename[0]))
           } catch (error) {
             console.log(error);
+            res.status(404);
           }  
 
         res.status(201).send({file:"file uploaded successfully"}) 
@@ -116,6 +104,7 @@ app.post('/uploadKeygen',(req,res)=>{
   fs.writeFile(uploadKeygen +"/Keygen.json", JSON.stringify(Keygen), 'utf8', function (err) {
     if (err) {
         console.log("An error occured while writing JSON Object to File.");
+        res.status(404);
         return console.log(err);
     }
  
@@ -177,15 +166,31 @@ if(fs.existsSync("public\\files\\Keygen\\Keygen.json")){
   
 }
 else{
-  data1="File 1 not found"
+  Keygen="Keygen.json not found"
 }
 
 var resred={}
 var resgreen={}
 var KeygenFile1=Keygen["File1"]
+var File1ColumnName=Keygen["File1ColumnName"]
+var File2ColumnName=Keygen["File2ColumnName"]
 
 for(let k=0;k<data1.length;k++){
   var pk=(data1[k])[KeygenFile1]
+  function renameKey(obj, old_key, new_key) {
+    // check if old key = new key  
+    if (old_key !== new_key) {
+        Object.defineProperty(obj, new_key, // modify old key
+            // fetch description from object
+            Object.getOwnPropertyDescriptor(obj, old_key));
+        delete obj[old_key];                // delete old key
+    }
+}
+  for(let m=0;m<File1ColumnName.length;m++){
+   
+    data2.forEach(obj => renameKey(obj, File1ColumnName[m], File2ColumnName[m]));
+  }
+ 
   const d2=data2.filter(d=>d[KeygenFile1]===pk )
   const d1=data1[k]
   
@@ -213,12 +218,14 @@ app.get('/:recordID', (req, res) => {
       file1 = fs.readdirSync("public\\files\\File1");
     }catch{
 file1="none"
+res.status(404);
     }
     try{
 
       file2 = fs.readdirSync("public\\files\\File2");
     }catch{
       file2="none"
+      res.status(404);
     }
     
   }
@@ -232,6 +239,7 @@ file1="none"
   }
   else{
     data1="File 1 not found"
+    res.status(404);
   }
   if(fs.existsSync("public\\files\\File2\\"+file2[0])){
     var data2=JSON.parse(fs.readFileSync("public\\files\\File2\\"+file2[0],{encoding:'utf8', flag:'r'}))
@@ -239,6 +247,7 @@ file1="none"
     
   }else{
     data2="File 2 not found"
+    res.status(404);
   }
   if(fs.existsSync("public\\files\\Keygen\\Keygen.json")){
     var Keygen=JSON.parse(fs.readFileSync("public\\files\\Keygen\\Keygen.json",{encoding:'utf8', flag:'r'}))
@@ -247,34 +256,48 @@ file1="none"
   }
   else{
     data1="File 1 not found"
+    res.status(404);
   }
   var result={}
   var KeygenFile1=Keygen["File1"]
   var KeygenFile2=Keygen["File2"]
-
-  var keys1=Object.keys(data1[0])
-  
+  var File1ColumnName=Keygen["File1ColumnName"]
+  var File2ColumnName=Keygen["File2ColumnName"]
+  var keys1=File1ColumnName
+  var keys2=File2ColumnName
+  function renameKey(obj, old_key, new_key) {
+    // check if old key = new key  
+    if (old_key !== new_key) {
+        Object.defineProperty(obj, new_key, // modify old key
+            // fetch description from object
+            Object.getOwnPropertyDescriptor(obj, old_key));
+        delete obj[old_key];                // delete old key
+    }
+}
+for(let m=0;m<File1ColumnName.length;m++){
+  var r=(File2ColumnName.filter(d=>d===File1ColumnName[m])).length>0 ? (File2ColumnName.filter(d=>d===File1ColumnName[m])):(File2ColumnName[m])
+  data2.forEach(obj => renameKey(obj, File1ColumnName[m], r[0]));
+}
   let fl1={}
    let fl2={}
    const id=req.params.recordID
   // for(let i=0;i<data1.length;i++){
   //    console.log(data1[i][key])
-     var datavar2=data2.filter(d2=>d2[KeygenFile2]===id )
+     var datavar2=data2.filter(d2=>d2[KeygenFile1]===id )
      var datavar1=data1.filter(d1=>d1[KeygenFile2]===id )
-    //  console.log((datavar2[0])[key])
-  //  keys1.forEach((key)=>{
-    //  console.log(key)
-    //  console.log(datavar2[0][key])
-    //  console.log(data1[id][key])
+     
+  
     for(let i=0;i<keys1.length;i++){
-if((datavar2[0][keys1[i]])!=(datavar1[0][keys1[i]])){
+if(String(datavar2[0][keys2[i]])!=String(datavar1[0][keys1[i]])){
 fl1["@"+(datavar1[0])[keys1[i]]]="#990f02"
-fl2["@"+(datavar2[0])[keys1[i]]]="#990f02"
+fl2["@"+(datavar2[0])[keys2[i]]]="#990f02"
+
 }else{
   fl1["@"+(datavar1[0])[keys1[i]]]="#3CB043"
-  fl2["@"+(datavar2[0])[keys1[i]]]="#3CB043"
+  fl2["@"+(datavar2[0])[keys2[i]]]="#3CB043"
   }
 }
+
 result={"File1":fl1,"File2":fl2}
 // console.log(fl1)
 // console.log(JSON.stringify(fl1))
